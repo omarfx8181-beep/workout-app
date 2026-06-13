@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A 100-day workout tracker built as an offline-capable PWA, used by the owner's wife on her phone (installed to the home screen via "Add to Home Screen"). It tracks a 100-day challenge running **Jun 12 – Sep 19, 2026**, organized as 10 "weeks" of 10 days each, with workout slots rotating A→J every 10 days.
 
-Features: mark days complete, log weight (lb/kg) and notes per day, streak/completed/remaining stats, per-block and overall weight-change summaries, JSON export/import backup, reset.
+Features: mark days complete, log weight (lb/kg) and notes per day, streak/completed/remaining stats, per-block and overall weight-change summaries, JSON export/import backup, reset. Checking off a day plays a pop animation; crossing 25/50/75/100 completed days triggers a confetti celebration overlay (`celebrate()` / `confettiBurst()` in `index.html`, detected in `saveModal()` by comparing `countDone()` before/after).
 
 ## Structure
 
@@ -26,7 +26,7 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-After editing, hard-refresh; the service worker is network-first so changes show up on reload. If caching ever gets sticky, bump the `CACHE` name in `sw.js` (`workout100-v1` → `-v2`) to force old caches to be purged on activate.
+After editing, hard-refresh; the service worker is network-first so changes show up on reload. If caching ever gets sticky, bump the `CACHE` version suffix in `sw.js` (currently `workout100-v2`) to force old caches to be purged on activate.
 
 ## Key implementation details
 
