@@ -38,6 +38,10 @@ After editing, hard-refresh; the service worker is network-first so changes show
 - **Weight change:** all comparisons convert to lb via `toLb()` (kg × 2.20462). `blockChange(w)` compares first vs. last logged weight within a 10-day block; the overall total compares first vs. latest logged across all 100 days.
 - **Rendering:** `render()` rebuilds the entire `#weeks` DOM from scratch and recomputes stats; it's called after every save. There's no framework or state library — keep it that way unless asked.
 
+## Deployment
+
+Live at **https://omarfx8181-beep.github.io/workout-app/** via GitHub Pages, served from the `main` branch root of https://github.com/omarfx8181-beep/workout-app (public repo). To deploy: commit and `git push` — Pages rebuilds automatically in ~1 minute. When shipping user-visible changes, bump the `CACHE` version in `sw.js` so installed phones fetch the new files. The `gh` CLI is at `~/.local/bin/gh`, authenticated as `omarfx8181-beep`.
+
 ## Constraints
 
 - **Don't break existing saved data.** The app is in active daily use; any change to the data shape needs a migration in `load()` (see the existing `done[k]===1` migration as the pattern).
