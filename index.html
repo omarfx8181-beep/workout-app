@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100-Day Cycle Tracker</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1a1825">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --bg:#1a1825;
+    --panel:#252233;
+    --line:#36324a;
+    --ink:#e8e4f0;
+    --dim:#8b85a3;
+    --done:#7fd1bd;
+    --done-deep:#2a4a45;
+    --accent:#ff9b9b;
+    --gold:#ffd6a5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Space Mono',monospace;
+    padding:28px 16px 80px;
+    background-image:radial-gradient(circle at 10% 0%,#2e2236 0,transparent 42%),
+                     radial-gradient(circle at 90% 4%,#1e2a3d 0,transparent 40%),
+                     radial-gradient(circle at 30% 96%,#1f3330 0,transparent 42%),
+                     radial-gradient(circle at 80% 100%,#332a1f 0,transparent 42%);
+    min-height:100vh;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  header{margin-bottom:24px;}
+  h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(46px,11vw,82px);
+    letter-spacing:2px;
+    line-height:.9;
+    color:var(--ink);
+  }
+  h1 span{color:var(--accent);}
+  .sub{color:var(--dim);font-size:13px;margin-top:6px;}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0;
+  }
+  .stat{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;
+  }
+  .stat .num{font-family:'Bebas Neue';font-size:40px;line-height:1;color:var(--done);}
+  .stat .lbl{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+
+  .bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin-bottom:24px;}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#ffd6a5,#ffadad,#bdb2ff,#9ad9c8);transition:width .4s;}
+
+  .week{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    margin-bottom:14px;overflow:hidden;
+  }
+  .week-h{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:13px 16px;cursor:pointer;user-select:none;
+  }
+  .week-h:hover{background:#2d2940;}
+  .week-h .t{font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;}
+  .week-h .meta{font-size:12px;color:var(--dim);}
+  .wt{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+  .wt-loss{background:#2a4a45;color:#9fdccf;}
+  .wt-gain{background:#4a2e33;color:#ffb3b3;}
+  .wt-flat{background:var(--line);color:var(--dim);font-weight:400;}
+  .total-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;
+  }
+  .total-card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);}
+  .total-card .val{font-family:'Bebas Neue';font-size:34px;line-height:1;}
+  .total-card .val.loss{color:var(--done);}
+  .total-card .val.gain{color:var(--accent);}
+  .days{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 14px 14px;}
+  @media(max-width:480px){.days{grid-template-columns:repeat(2,1fr);}}
+
+  .day{
+    background:var(--bg);border:1px solid var(--line);border-radius:9px;
+    padding:10px 9px;cursor:pointer;transition:.15s;position:relative;
+  }
+  .day:hover{border-color:var(--accent);}
+  .day.done{background:var(--done-deep);border-color:var(--done);}
+  .day .n{font-family:'Bebas Neue';font-size:26px;line-height:1;}
+  .day.done .n{color:#bff0e4;}
+  .day .dt{font-size:10px;color:var(--dim);margin-top:3px;}
+  .day.done .dt{color:#8fd4c5;}
+  .day .cyc{font-size:9px;color:var(--gold);letter-spacing:.5px;margin-top:5px;text-transform:uppercase;}
+  .day.done .cyc{color:#9fdccf;}
+  .check{position:absolute;top:8px;right:9px;font-size:13px;opacity:0;}
+  .day.done .check{opacity:1;}
+  .today{box-shadow:0 0 0 2px var(--accent);}
+
+  .legend{font-size:11px;color:var(--dim);margin-top:18px;line-height:1.7;}
+  .reset{
+    margin-top:20px;background:none;border:1px solid var(--line);color:var(--dim);
+    padding:9px 16px;border-radius:8px;font-family:'Space Mono';font-size:12px;cursor:pointer;
+  }
+  .reset:hover{border-color:var(--accent);color:var(--accent);}
+
+  .note-dot{position:absolute;bottom:8px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--gold);}
+  .day.done .note-dot{background:#9fdccf;}
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;
+    align-items:center;justify-content:center;padding:18px;z-index:50;
+  }
+  .overlay.on{display:flex;}
+  .modal{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    width:100%;max-width:420px;padding:22px;
+  }
+  .modal h3{font-family:'Bebas Neue';font-size:30px;letter-spacing:1px;}
+  .modal .msub{font-size:12px;color:var(--dim);margin:2px 0 16px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:5px;}
+  .field input,.field textarea{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:'Space Mono';font-size:14px;padding:10px;resize:vertical;
+  }
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);}
+  .field textarea{min-height:90px;}
+  .mrow{display:flex;gap:10px;margin-top:6px;}
+  .mrow button{flex:1;padding:11px;border-radius:8px;font-family:'Space Mono';font-size:13px;cursor:pointer;border:none;}
+  .btn-save{background:#7fd1bd;color:#143b34;}
+  .btn-save:hover{background:#93dccb;color:#143b34;}
+  .btn-cancel{background:none;border:1px solid var(--line);color:var(--dim);}
+  .btn-cancel:hover{border-color:var(--accent);color:var(--accent);}
+  .mark-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);margin-bottom:14px;cursor:pointer;}
+  .mark-row input{width:auto;}
+  .wrow{display:flex;gap:8px;}
+  .wrow #mWeight{flex:1;}
+  .unit-tog{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .unit-tog button{
+    background:var(--bg);color:var(--dim);border:none;padding:0 14px;
+    font-family:'Space Mono';font-size:13px;cursor:pointer;
+  }
+  .unit-tog button.on{background:var(--accent);color:#4a1f1f;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>100 <span>DAYS</span><br>10×10 CYCLE</h1>
+    <div class="sub">Jun 12 – Sep 19, 2026 · ten-day rotation, ten weeks</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="sDone">0</div><div class="lbl">Completed</div></div>
+    <div class="stat"><div class="num" id="sStreak">0</div><div class="lbl">Streak</div></div>
+    <div class="stat"><div class="num" id="sLeft">100</div><div class="lbl">Remaining</div></div>
+  </div>
+  <div class="bar"><i id="bar" style="width:0%"></i></div>
+
+  <div class="total-card">
+    <span class="lbl">Total weight change<br><span style="text-transform:none;letter-spacing:0;font-size:10px">first to latest logged</span></span>
+    <span class="val" id="totalWt">—</span>
+  </div>
+
+  <div id="weeks"></div>
+
+  <div class="legend">
+    Cycle slots rotate A→J every 10 days. Tap any day to mark it complete and log weight or notes.<br>
+    Orange ring = today · gold dot = day has a note. Progress saves automatically.
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="reset" onclick="exportData()">Export backup</button>
+    <button class="reset" onclick="document.getElementById('importFile').click()">Import backup</button>
+    <button class="reset" onclick="resetAll()">Reset all progress</button>
+  </div>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="mTitle">Day</h3>
+    <div class="msub" id="mDate"></div>
+    <label class="mark-row"><input type="checkbox" id="mDone"> Mark this day complete</label>
+    <div class="field">
+      <label>Weight</label>
+      <div class="wrow">
+        <input id="mWeight" placeholder="e.g. 182" inputmode="decimal">
+        <div class="unit-tog">
+          <button type="button" id="uLb" class="on" onclick="setUnit('lb')">lb</button>
+          <button type="button" id="uKg" onclick="setUnit('kg')">kg</button>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Activity / Notes</label>
+      <textarea id="mNote" placeholder="What did you do today?"></textarea>
+    </div>
+    <div class="mrow">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const START = new Date(2026, 5, 12); // Jun 12 2026 (month 0-indexed)
+const CYCLE = ['A','B','C','D','E','F','G','H','I','J'];
+const MS = 86400000;
+let done = {};
+
+async function load(){
+  try{ const r = localStorage.getItem('workout100'); if(r) done = JSON.parse(r); }
+  catch(e){ done = {}; }
+  // migrate old format (value === 1) to object
+  for(const k in done){
+    if(done[k]===1) done[k]={done:true,weight:'',unit:'lb',note:''};
+    else if(done[k] && done[k].unit===undefined) done[k].unit='lb';
+  }
+}
+async function save(){
+  try{ localStorage.setItem('workout100', JSON.stringify(done)); }catch(e){}
+}
+
+function fmt(d){
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function todayIndex(){
+  const now = new Date(); now.setHours(0,0,0,0);
+  return Math.floor((now - START)/MS); // 0-based day number
+}
+
+// returns weight in lb (number) or null
+function toLb(e){
+  if(!e || !e.weight || !String(e.weight).trim()) return null;
+  const v = parseFloat(e.weight);
+  if(isNaN(v)) return null;
+  return e.unit==='kg' ? v*2.20462 : v;
+}
+// first & last logged weights within a 10-day block [w*10 .. w*10+9]
+function blockChange(w){
+  let first=null, last=null;
+  for(let i=0;i<10;i++){
+    const lb = toLb(done[w*10+i]);
+    if(lb!==null){ if(first===null) first=lb; last=lb; }
+  }
+  if(first===null || last===null || first===last) return {has:first!==null, delta:0, count:(first!==null?1:0)};
+  return {has:true, delta:last-first};
+}
+
+function render(){
+  const weeks = document.getElementById('weeks');
+  weeks.innerHTML = '';
+  const ti = todayIndex();
+  let total = 0;
+  for(let w=0; w<10; w++){
+    const wEl = document.createElement('div'); wEl.className='week';
+    let wDone = 0;
+    const days = document.createElement('div'); days.className='days';
+    for(let i=0;i<10;i++){
+      const idx = w*10+i;              // 0..99
+      const dayNum = idx+1;            // 1..100
+      const date = new Date(START.getTime()+idx*MS);
+      const e = done[idx];
+      const d = document.createElement('div'); d.className='day';
+      if(e && e.done) { d.classList.add('done'); wDone++; total++; }
+      if(idx===ti) d.classList.add('today');
+      const hasNote = e && ((e.note&&e.note.trim()) || (e.weight&&e.weight.trim()));
+      d.innerHTML = `<div class="check">✓</div>
+        <div class="n">${dayNum}</div>
+        <div class="dt">${fmt(date)}</div>
+        <div class="cyc">Slot ${CYCLE[i]}</div>
+        ${hasNote?'<div class="note-dot"></div>':''}`;
+      d.onclick = ()=>openModal(idx,dayNum,date);
+      days.appendChild(d);
+    }
+    const start = new Date(START.getTime()+w*10*MS);
+    const end = new Date(START.getTime()+(w*10+9)*MS);
+    const bc = blockChange(w);
+    let wt = '';
+    if(bc.has && bc.delta!==0){
+      const lb = bc.delta, kg = bc.delta/2.20462;
+      const lost = lb < 0;
+      const sign = lb < 0 ? '−' : '+';
+      const cls = lost ? 'wt-loss' : 'wt-gain';
+      wt = `<span class="wt ${cls}">${sign}${Math.abs(lb).toFixed(1)} lb / ${sign}${Math.abs(kg).toFixed(1)} kg</span>`;
+    } else if(bc.has){
+      wt = `<span class="wt wt-flat">no change</span>`;
+    }
+    const h = document.createElement('div'); h.className='week-h';
+    h.innerHTML = `<span class="t">Week ${w+1}</span>
+      <span class="meta">${fmt(start)} – ${fmt(end)} · ${wDone}/10 ${wt}</span>`;
+    h.onclick = ()=>{ days.style.display = days.style.display==='none'?'grid':'none'; };
+    wEl.appendChild(h); wEl.appendChild(days);
+    weeks.appendChild(wEl);
+  }
+  // stats
+  document.getElementById('sDone').textContent = total;
+  document.getElementById('sLeft').textContent = 100-total;
+  document.getElementById('bar').style.width = total+'%';
+  // streak ending today/most recent
+  let streak=0;
+  for(let i=Math.min(ti,99); i>=0; i--){ if(done[i]&&done[i].done) streak++; else break; }
+  document.getElementById('sStreak').textContent = streak;
+
+  // overall weight change: first logged across all days -> latest logged
+  let firstAll=null, lastAll=null;
+  for(let i=0;i<100;i++){
+    const lb = toLb(done[i]);
+    if(lb!==null){ if(firstAll===null) firstAll=lb; lastAll=lb; }
+  }
+  const tw = document.getElementById('totalWt');
+  if(firstAll===null || lastAll===null || firstAll===lastAll){
+    tw.textContent = firstAll===null ? '—' : '0.0 lb';
+    tw.className='val';
+  } else {
+    const lb = lastAll-firstAll, kg = lb/2.20462;
+    const lost = lb<0, sign = lost?'−':'+';
+    tw.textContent = `${sign}${Math.abs(lb).toFixed(1)} lb · ${sign}${Math.abs(kg).toFixed(1)} kg`;
+    tw.className = 'val '+(lost?'loss':'gain');
+  }
+}
+
+let curIdx=null, curUnit='lb';
+function setUnit(u){
+  curUnit=u;
+  document.getElementById('uLb').classList.toggle('on',u==='lb');
+  document.getElementById('uKg').classList.toggle('on',u==='kg');
+}
+function openModal(idx,dayNum,date){
+  curIdx=idx;
+  const e = done[idx] || {done:false,weight:'',unit:'lb',note:''};
+  document.getElementById('mTitle').textContent = 'Day '+dayNum;
+  document.getElementById('mDate').textContent =
+    date.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+
+    ' · Slot '+CYCLE[idx%10];
+  document.getElementById('mDone').checked = !!e.done;
+  document.getElementById('mWeight').value = e.weight||'';
+  setUnit(e.unit||'lb');
+  document.getElementById('mNote').value = e.note||'';
+  document.getElementById('overlay').classList.add('on');
+}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('on');
+  curIdx=null;
+}
+async function saveModal(){
+  if(curIdx===null) return;
+  const obj={
+    done: document.getElementById('mDone').checked,
+    weight: document.getElementById('mWeight').value,
+    unit: curUnit,
+    note: document.getElementById('mNote').value
+  };
+  if(!obj.done && !obj.weight.trim() && !obj.note.trim()) delete done[curIdx];
+  else done[curIdx]=obj;
+  await save(); closeModal(); render();
+}
+document.getElementById('overlay').addEventListener('click',ev=>{
+  if(ev.target.id==='overlay') closeModal();
+});
+
+async function resetAll(){
+  if(confirm('Clear all 100 days?')){ done={}; await save(); render(); }
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(done,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'workout-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importData(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = async ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      if(typeof data!=='object'||Array.isArray(data)) throw 0;
+      done = data; await save(); render();
+      alert('Backup restored!');
+    }catch(e){ alert('That file doesn\'t look like a valid backup.'); }
+  };
+  r.readAsText(f);
+  ev.target.value='';
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+(async()=>{ await load(); render(); })();
+</script>
+</body>
+</html>

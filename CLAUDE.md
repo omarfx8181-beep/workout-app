@@ -1,0 +1,43 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+A 100-day workout tracker built as an offline-capable PWA, used by the owner's wife on her phone (installed to the home screen via "Add to Home Screen"). It tracks a 100-day challenge running **Jun 12 – Sep 19, 2026**, organized as 10 "weeks" of 10 days each, with workout slots rotating A→J every 10 days.
+
+Features: mark days complete, log weight (lb/kg) and notes per day, streak/completed/remaining stats, per-block and overall weight-change summaries, JSON export/import backup, reset.
+
+## Structure
+
+There is no build system, no dependencies, no tests. The entire app is **one file**:
+
+- `index.html` — all markup, CSS, and JavaScript. CSS is in a `<style>` block, app logic in a `<script>` block at the bottom.
+- `sw.js` — service worker. Network-first with cache fallback so the app works offline and updates arrive when online.
+- `manifest.json` — PWA manifest (standalone display, icons, theme color `#1a1825`).
+- `icon-192.png` / `icon-512.png` — app icons.
+
+## Running / testing changes
+
+Serve the folder over HTTP (service workers don't register from `file://`):
+
+```bash
+python3 -m http.server 8000
+# then open http://localhost:8000
+```
+
+After editing, hard-refresh; the service worker is network-first so changes show up on reload. If caching ever gets sticky, bump the `CACHE` name in `sw.js` (`workout100-v1` → `-v2`) to force old caches to be purged on activate.
+
+## Key implementation details
+
+- **Data model:** all state lives in `localStorage` under the key `workout100`. It's an object keyed by day index `0`–`99`, each value `{done: bool, weight: string, unit: 'lb'|'kg', note: string}`. The `load()` function migrates an older format where values were `1`. Entries that are fully empty are deleted on save rather than stored.
+- **Date math:** `START` in `index.html` (`new Date(2026, 5, 12)`, month is 0-indexed) anchors everything. Day index = days elapsed since START; day number shown to the user = index + 1. Today is highlighted via `todayIndex()`. The date range in the header `<div class="sub">` is hardcoded text — keep it in sync if START changes.
+- **Cycle slots:** slot letter for a day is `CYCLE[idx % 10]` (A–J).
+- **Weight change:** all comparisons convert to lb via `toLb()` (kg × 2.20462). `blockChange(w)` compares first vs. last logged weight within a 10-day block; the overall total compares first vs. latest logged across all 100 days.
+- **Rendering:** `render()` rebuilds the entire `#weeks` DOM from scratch and recomputes stats; it's called after every save. There's no framework or state library — keep it that way unless asked.
+
+## Constraints
+
+- **Don't break existing saved data.** The app is in active daily use; any change to the data shape needs a migration in `load()` (see the existing `done[k]===1` migration as the pattern).
+- Phone-first: it's used on a mobile screen. The day grid collapses from 5 columns to 2 below 480px; check narrow-viewport layout when touching CSS.
+- Keep it a single self-contained `index.html` — no build step, no npm.
