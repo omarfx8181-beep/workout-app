@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A 100-day workout tracker built as an offline-capable PWA, used by the owner's wife on her phone (installed to the home screen via "Add to Home Screen"). It tracks a 100-day challenge running **Jun 12 – Sep 19, 2026**, organized as 10 "weeks" of 10 days each, with workout slots rotating A→J every 10 days.
 
-Features: mark days complete, log weight (lb/kg) and notes per day, streak/completed/remaining stats, per-block and overall weight-change summaries, JSON export/import backup, reset. Checking off a day plays a pop animation; crossing 25/50/75/100 completed days triggers a confetti celebration overlay (`celebrate()` / `confettiBurst()` in `index.html`, detected in `saveModal()` by comparing `countDone()` before/after).
+Features: mark days complete, log weight (lb/kg) and notes per day, streak/completed/remaining stats, per-block and overall weight-change summaries, JSON export/import backup, reset. Checking off a day plays a pop animation; crossing 25/50/75/100 completed days triggers a confetti celebration overlay (`celebrate()` / `confettiBurst()` in `index.html`, detected by comparing `countDone()` before/after a save — in both `saveModal()` and `toggleToday()`).
+
+The app has two views switched by a fixed bottom tab bar (`showView()`): **Today** (default on open — big check-in button that toggles today via `toggleToday()`, an "Add weight & notes" shortcut into the shared modal, and a weight-trend chart) and **All days** (the original 10-week grid, stats, and export/import/reset). The chart is a hand-built inline SVG (`drawChart()`, no chart library); it plots all logged weights by day index, displays in the unit of the most recent entry, and shows an empty-state message until two weights exist. `render()` calls `renderToday()` at the end, so every save path refreshes both views.
 
 ## Structure
 
@@ -26,7 +28,7 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-After editing, hard-refresh; the service worker is network-first so changes show up on reload. If caching ever gets sticky, bump the `CACHE` version suffix in `sw.js` (currently `workout100-v2`) to force old caches to be purged on activate.
+After editing, hard-refresh; the service worker is network-first so changes show up on reload. If caching ever gets sticky, bump the `CACHE` version suffix in `sw.js` (currently `workout100-v3`) to force old caches to be purged on activate.
 
 ## Key implementation details
 

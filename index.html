@@ -36,7 +36,7 @@
     background:var(--bg);
     color:var(--ink);
     font-family:'Outfit',system-ui,sans-serif;
-    padding:max(28px,env(safe-area-inset-top)) 16px 90px;
+    padding:max(28px,env(safe-area-inset-top)) 16px 130px;
     background-image:
       radial-gradient(circle at 12% 0%,rgba(255,107,157,.16) 0,transparent 38%),
       radial-gradient(circle at 92% 6%,rgba(99,102,241,.20) 0,transparent 40%),
@@ -196,6 +196,64 @@
   .btn-cancel{background:none;border:1.5px solid var(--line);color:var(--dim);}
   .btn-cancel:active{border-color:var(--coral);color:var(--coral);}
 
+  /* ---- today view ---- */
+  .today-card{
+    background:var(--card);border:1px solid var(--line);border-radius:26px;
+    padding:28px 20px 24px;text-align:center;margin-bottom:16px;
+    box-shadow:0 10px 28px rgba(0,0,0,.25);
+  }
+  .t-day{font-weight:800;font-size:30px;letter-spacing:-.5px;}
+  .t-date{color:var(--dim);font-weight:500;font-size:14px;margin-top:4px;}
+  #checkBtn{
+    width:190px;height:190px;border-radius:50%;border:none;margin:26px auto 16px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    background:var(--grad-main);color:#3a0f1f;font-family:'Outfit';cursor:pointer;
+    box-shadow:0 16px 44px rgba(255,107,157,.38);
+    transition:transform .15s,box-shadow .35s,background .35s;
+  }
+  #checkBtn:active{transform:scale(.94);}
+  #checkBtn.done{background:var(--grad-mint);color:#063a2a;box-shadow:0 16px 44px rgba(52,211,153,.38);}
+  #checkBtn .ico{font-size:46px;line-height:1;}
+  #checkBtn .lbl{font-weight:800;font-size:24px;letter-spacing:-.3px;}
+  #checkBtn.bump{animation:popIn .5s cubic-bezier(.34,1.56,.64,1);}
+  .t-streak{font-weight:600;font-size:14px;color:var(--gold);min-height:20px;}
+  .t-notes{
+    margin-top:18px;background:var(--card-soft);border:1.5px solid var(--line);color:var(--ink);
+    padding:14px 24px;min-height:50px;border-radius:99px;
+    font-family:'Outfit';font-size:15px;font-weight:600;cursor:pointer;
+    transition:border-color .2s,color .2s;
+  }
+  .t-notes:active{border-color:var(--coral);color:var(--coral);}
+
+  .chart-card{
+    background:var(--card);border:1px solid var(--line);border-radius:26px;
+    padding:18px 18px 14px;box-shadow:0 10px 28px rgba(0,0,0,.25);
+  }
+  .chart-title{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;}
+  .chart-sub{font-size:13px;font-weight:600;margin-top:8px;text-align:center;}
+  .chart-sub .loss{color:var(--mint);}
+  .chart-sub .gain{color:var(--coral);}
+  .chart-empty{color:var(--dim);font-size:13px;font-weight:500;padding:28px 0;text-align:center;}
+  #chartBox svg{width:100%;height:auto;display:block;}
+  #chartBox text{font-family:'Outfit';font-size:9px;font-weight:600;fill:var(--dim);}
+
+  /* ---- bottom tabs ---- */
+  .tabs{
+    position:fixed;left:50%;transform:translateX(-50%);
+    bottom:max(16px,env(safe-area-inset-bottom));z-index:40;
+    display:flex;gap:6px;padding:6px;border-radius:99px;
+    background:rgba(20,16,40,.88);border:1px solid var(--line);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 12px 34px rgba(0,0,0,.45);
+  }
+  .tabs button{
+    border:none;background:none;color:var(--dim);
+    font-family:'Outfit';font-weight:700;font-size:15px;
+    padding:12px 26px;min-height:48px;border-radius:99px;cursor:pointer;
+    white-space:nowrap;transition:color .2s;
+  }
+  .tabs button.on{background:var(--grad-main);color:#3a0f1f;}
+
   /* ---- celebration ---- */
   #celebrate{
     position:fixed;inset:0;background:rgba(8,6,18,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
@@ -223,6 +281,25 @@
     <div class="sub">Jun 12 – Sep 19, 2026 · ten-day rotation, ten weeks</div>
   </header>
 
+  <div id="viewToday">
+    <div class="today-card">
+      <div class="t-day" id="tDayNum">Day —</div>
+      <div class="t-date" id="tDate"></div>
+      <button id="checkBtn" onclick="toggleToday()">
+        <span class="ico" id="checkIco">💪</span>
+        <span class="lbl" id="checkLbl">Check in</span>
+      </button>
+      <div class="t-streak" id="tStreak"></div>
+      <button class="t-notes" id="tNotesBtn" onclick="openToday()">+ Add weight &amp; notes</button>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Weight trend</div>
+      <div id="chartBox"></div>
+      <div class="chart-sub" id="chartSub"></div>
+    </div>
+  </div>
+
+  <div id="viewAll" style="display:none">
   <div class="stats">
     <div class="stat"><div class="num" id="sDone">0</div><div class="lbl">Completed</div></div>
     <div class="stat"><div class="num" id="sStreak">0</div><div class="lbl">Streak</div></div>
@@ -250,7 +327,13 @@
     <button onclick="resetAll()">Reset all progress</button>
   </div>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div><!-- /viewAll -->
 </div>
+
+<nav class="tabs">
+  <button id="tabToday" class="on" onclick="showView('today')">Today</button>
+  <button id="tabAll" onclick="showView('all')">All days</button>
+</nav>
 
 <div class="overlay" id="overlay">
   <div class="modal">
@@ -408,6 +491,128 @@ function render(){
     tw.textContent = `${sign}${Math.abs(lb).toFixed(1)} lb · ${sign}${Math.abs(kg).toFixed(1)} kg`;
     tw.className = 'val '+(lost?'loss':'gain');
   }
+  renderToday();
+}
+
+/* ---- today view ---- */
+function showView(v){
+  document.getElementById('viewToday').style.display = v==='today'?'block':'none';
+  document.getElementById('viewAll').style.display = v==='all'?'block':'none';
+  document.getElementById('tabToday').classList.toggle('on',v==='today');
+  document.getElementById('tabAll').classList.toggle('on',v==='all');
+  window.scrollTo(0,0);
+}
+function renderToday(){
+  const ti = todayIndex();
+  const btn = document.getElementById('checkBtn');
+  const dnum = document.getElementById('tDayNum');
+  const dt = document.getElementById('tDate');
+  const sub = document.getElementById('tStreak');
+  const notesBtn = document.getElementById('tNotesBtn');
+  if(ti<0){
+    dnum.textContent='Not started yet';
+    dt.textContent='The challenge begins Jun 12, 2026';
+    btn.style.display='none'; notesBtn.style.display='none'; sub.textContent='';
+  } else if(ti>99){
+    dnum.textContent='Challenge complete!';
+    dt.textContent='All 100 days are behind you';
+    btn.style.display='none'; notesBtn.style.display='none';
+    sub.textContent='🏆 '+countDone()+' / 100 days completed';
+  } else {
+    const date = new Date(START.getTime()+ti*MS);
+    dnum.textContent='Day '+(ti+1)+' of 100';
+    dt.textContent=date.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+' · Slot '+CYCLE[ti%10];
+    const isDone = !!(done[ti]&&done[ti].done);
+    btn.classList.toggle('done',isDone);
+    document.getElementById('checkIco').textContent = isDone?'✓':'💪';
+    document.getElementById('checkLbl').textContent = isDone?'Done!':'Check in';
+    let streak=0;
+    for(let i=ti;i>=0;i--){ if(done[i]&&done[i].done) streak++; else break; }
+    sub.textContent = streak>0 ? '🔥 '+streak+'-day streak' : 'Tap the button when today’s workout is done';
+  }
+  drawChart();
+}
+async function toggleToday(){
+  const ti = todayIndex();
+  if(ti<0||ti>99) return;
+  const prevTotal = countDone();
+  const e = done[ti] || {done:false,weight:'',unit:'lb',note:''};
+  e.done = !e.done;
+  if(!e.done && !String(e.weight).trim() && !String(e.note).trim()) delete done[ti];
+  else done[ti]=e;
+  await save(); render();
+  if(e.done){
+    const btn = document.getElementById('checkBtn');
+    btn.classList.add('bump'); setTimeout(()=>btn.classList.remove('bump'),550);
+    if(navigator.vibrate) navigator.vibrate(30);
+    const newTotal = countDone();
+    for(const m of [25,50,75,100]){
+      if(prevTotal < m && newTotal >= m){ celebrate(m); break; }
+    }
+  }
+}
+function openToday(){
+  const ti = todayIndex();
+  if(ti<0||ti>99) return;
+  openModal(ti, ti+1, new Date(START.getTime()+ti*MS));
+}
+
+/* ---- weight trend chart (inline SVG, no deps) ---- */
+function drawChart(){
+  const box = document.getElementById('chartBox');
+  const sub = document.getElementById('chartSub');
+  const pts = [];
+  for(let i=0;i<100;i++){
+    const lb = toLb(done[i]);
+    if(lb!==null) pts.push({i, lb, unit:(done[i].unit||'lb')});
+  }
+  if(pts.length<2){
+    box.innerHTML = '<div class="chart-empty">'+
+      (pts.length===0 ? 'Log a weight on any day to start your trend'
+                      : 'Log one more weight to see your trend')+'</div>';
+    sub.textContent='';
+    return;
+  }
+  const u = pts[pts.length-1].unit;             // display in the most recently used unit
+  const val = p => u==='kg' ? p.lb/2.20462 : p.lb;
+  const W=320, H=150, T=12, R=12, B=20, L=38;
+  const x0=pts[0].i, x1=pts[pts.length-1].i;
+  const vals = pts.map(val);
+  let lo=Math.min(...vals), hi=Math.max(...vals);
+  const loRaw=lo, hiRaw=hi;
+  if(hi-lo<1){ const m=(hi+lo)/2; lo=m-1; hi=m+1; }
+  const pad=(hi-lo)*0.12; lo-=pad; hi+=pad;
+  const X = i => L+(i-x0)/((x1-x0)||1)*(W-L-R);
+  const Y = v => T+(hi-v)/(hi-lo)*(H-T-B);
+  const line = pts.map((p,k)=>(k?'L':'M')+X(p.i).toFixed(1)+','+Y(val(p)).toFixed(1)).join(' ');
+  const area = line+' L'+X(x1).toFixed(1)+','+(H-B)+' L'+X(x0).toFixed(1)+','+(H-B)+' Z';
+  const dots = pts.map(p=>`<circle cx="${X(p.i).toFixed(1)}" cy="${Y(val(p)).toFixed(1)}" r="3" fill="#22d3ee"/>`).join('');
+  const last = pts[pts.length-1];
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Weight trend chart">
+    <defs>
+      <linearGradient id="wline" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#ff6b9d"/><stop offset="1" stop-color="#22d3ee"/>
+      </linearGradient>
+      <linearGradient id="warea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="rgba(34,211,238,.25)"/><stop offset="1" stop-color="rgba(34,211,238,0)"/>
+      </linearGradient>
+    </defs>
+    <line x1="${L}" y1="${Y(hiRaw).toFixed(1)}" x2="${W-R}" y2="${Y(hiRaw).toFixed(1)}" stroke="rgba(255,255,255,.08)" stroke-dasharray="3 4"/>
+    <line x1="${L}" y1="${Y(loRaw).toFixed(1)}" x2="${W-R}" y2="${Y(loRaw).toFixed(1)}" stroke="rgba(255,255,255,.08)" stroke-dasharray="3 4"/>
+    <text x="${L-5}" y="${(Y(hiRaw)+3).toFixed(1)}" text-anchor="end">${hiRaw.toFixed(1)}</text>
+    <text x="${L-5}" y="${(Y(loRaw)+3).toFixed(1)}" text-anchor="end">${loRaw.toFixed(1)}</text>
+    <text x="${L}" y="${H-6}">Day ${x0+1}</text>
+    <text x="${W-R}" y="${H-6}" text-anchor="end">Day ${x1+1}</text>
+    <path d="${area}" fill="url(#warea)"/>
+    <path d="${line}" fill="none" stroke="url(#wline)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+    <circle cx="${X(last.i).toFixed(1)}" cy="${Y(val(last)).toFixed(1)}" r="5" fill="#f4f1ff" stroke="#22d3ee" stroke-width="2.5"/>
+  </svg>`;
+  const delta = val(last)-vals[0];
+  const sign = delta<0 ? '−' : '+';
+  const cls = delta<0 ? 'loss' : 'gain';
+  sub.innerHTML = vals[0].toFixed(1)+' → '+val(last).toFixed(1)+' '+u+
+    (Math.abs(delta)<0.05 ? '' : ' · <span class="'+cls+'">'+sign+Math.abs(delta).toFixed(1)+' '+u+'</span>');
 }
 
 let curIdx=null, curUnit='lb';
